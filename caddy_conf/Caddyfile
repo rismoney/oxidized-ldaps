@@ -1,0 +1,73 @@
+{
+        http_port 8888
+        https_port 8443
+        # debug
+
+        order authenticate before respond
+        order authorize before basicauth
+
+        security {
+                local identity store localdb {
+                        realm local
+                        path {$HOME}/.local/caddy/users.json
+                }
+
+                oauth identity provider github {env.GITHUB_CLIENT_ID} {env.GITHUB_CLIENT_SECRET}
+
+                ldap identity store myco.com {
+                        realm myco.com
+                        servers {
+                                 ldaps://domaincontroller.my.com ignore_cert_errors
+                        }
+                        attributes {
+                                name givenName
+                                surname sn
+                                username sAMAccountName
+                                member_of memberOf
+                                email mail
+                        }
+                        username "CN=Rich Siegel,OU=NewYork,OU=Employees,OU=Users,OU=MyStuff,DC=myco,DC=com"
+                        password "noneyadamnbiz"
+                        search_base_dn "DC=myco,DC=com"
+                        search_filter "(&(|(sAMAccountName=%s)(mail=%s))(objectclass=user))"
+                        groups {
+                                "CN=sec_winserver_adm,OU=PrivilegedSecurityGroups,OU=MyStuff,DC=myco,DC=com" admin
+                        }
+
+                }
+
+                authentication portal myportal {
+                        crypto default token lifetime 3600
+                        crypto key sign-verify {env.JWT_SHARED_KEY}
+                        enable identity store localdb
+                        enable identity store myco.com
+                        ui {
+                                logo url "https://caddyserver.com/resources/images/caddy-circle-lock.svg"
+                                logo description "Caddy"
+                        }
+                }
+
+                authorization policy mypolicy {
+                        # disable auth redirect
+                        set auth url http://auth.myco.com:8888/
+                        allow roles authp/admin authp/user
+                        crypto key verify {env.JWT_SHARED_KEY}
+                        allow roles anonymous guest admin
+                        allow roles authp/admin authp/guest
+                        allow roles admin editor viewer
+                        allow roles AzureAD_Administrator AzureAD_Editor AzureAD_Viewer
+                        allow roles everyone Everyone
+                }
+        }
+}
+
+http://auth.myco.com {
+        route {
+                authenticate with myportal
+        }
+}
+
+http://oxidized.myco.com:8888 {
+  authorize with mypolicy
+  reverse_proxy oxidizeddocker:8888
+}

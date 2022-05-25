@@ -1,0 +1,18 @@
+oxidizeddocker:
+  restart: always
+  image: oxidized/oxidized:latest
+  environment:
+    CONFIG_RELOAD_INTERVAL: 600
+  volumes:
+    - ./oxidized_conf:/root/.config/oxidized
+
+caddy:
+  image: delver/caddy-security:latest
+  container_name: caddy
+  restart: unless-stopped
+  ports:
+    - 8888:8888
+  volumes:
+    - ./caddy_conf:/etc/caddy
+  links:
+      - oxidizeddocker

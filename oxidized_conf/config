@@ -1,0 +1,53 @@
+---
+username: username
+password: password
+model: cisco
+resolve_dns: true
+interval: 3600
+use_syslog: false
+debug: false
+threads: 30
+use_max_threads: false
+timeout: 20
+retries: 3
+prompt: !ruby/regexp /^([\w.@-]+[#>]\s?)$/
+rest: 0.0.0.0:8888
+next_adds_job: false
+vars:
+  remove_secret: true
+groups: {}
+models: {}
+pid: "/root/.config/oxidized/pid"
+crash:
+  directory: "/root/.config/oxidized/crashes"
+  hostnames: false
+stats:
+  history_size: 10
+input:
+  default: ssh, telnet
+  debug: false
+  ssh:
+    secure: false
+  ftp:
+    passive: true
+  utf8_encoded: true
+output:
+  default: file
+  file:
+    directory: "/root/.config/oxidized/configs"
+source:
+  default: csv
+  csv:
+    file: "/root/.config/oxidized/router.db"
+    delimiter: !ruby/regexp /:/
+    map:
+      name: 0
+      model: 1
+      username: 2
+      password: 3
+    vars_map:
+      enable: 4
+    gpg: false
+model_map:
+  juniper: junos
+  cisco: ios
