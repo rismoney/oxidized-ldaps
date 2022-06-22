@@ -1,18 +1,22 @@
-oxidizeddocker:
+oxidized:
+  hostname: oxidized.example.com
   restart: always
   image: oxidized/oxidized:latest
   environment:
     CONFIG_RELOAD_INTERVAL: 600
   volumes:
     - ./oxidized_conf:/root/.config/oxidized
+    - ./oxidized_ssh:/root/.ssh
 
 caddy:
-  image: delver/caddy-security:latest
+  image: ghcr.io/greenpau/authp:v1.1.12
   container_name: caddy
   restart: unless-stopped
   ports:
-    - 8888:8888
+    - 443:443
+    - 8888:80
+    - 8443:8443
   volumes:
     - ./caddy_conf:/etc/caddy
   links:
-      - oxidizeddocker
+    - oxidized

@@ -5,7 +5,7 @@ model: cisco
 resolve_dns: true
 interval: 3600
 use_syslog: false
-debug: false
+debug: true
 threads: 30
 use_max_threads: false
 timeout: 20
@@ -13,11 +13,13 @@ retries: 3
 prompt: !ruby/regexp /^([\w.@-]+[#>]\s?)$/
 rest: 0.0.0.0:8888
 next_adds_job: false
+
 vars:
   remove_secret: true
 groups: {}
+
 models: {}
-pid: "/root/.config/oxidized/pid"
+pid: "/root/.config/pid"
 crash:
   directory: "/root/.config/oxidized/crashes"
   hostnames: false
@@ -31,10 +33,7 @@ input:
   ftp:
     passive: true
   utf8_encoded: true
-output:
-  default: file
-  file:
-    directory: "/root/.config/oxidized/configs"
+
 source:
   default: csv
   csv:
@@ -51,3 +50,19 @@ source:
 model_map:
   juniper: junos
   cisco: ios
+
+output:
+  default: git
+  git:
+    single_repo: true
+    user: oxidized
+    email: oxidized@example.com
+    repo: ~/.config/oxidized/devices.git
+
+hooks:
+  push_to_remote:
+    type: githubrepo
+    events: [post_store]
+    remote_repo: "ssh://git@stash.example.com:7999/NET/network-devices.git"
+    privatekey: ~/.ssh/id_rsa
+    publickey: ~/.ssh/id_rsa.pub
